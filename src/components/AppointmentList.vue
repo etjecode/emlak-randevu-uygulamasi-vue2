@@ -15,7 +15,7 @@
     </div>
 
     <Pagination
-      v-if="hasItems && totalPages > 1"
+      v-if="totalPages > 1"
       :totalPages="totalPages"
       :currentPage="currentPage"
       @change="changePage"
@@ -32,11 +32,11 @@ export default {
   components: { AppointmentCard, Pagination },
   props: {
     appointments: { type: Array, default: () => [] },
-    itemsPerPage: { type: Number, default: 10 },
   },
   data() {
     return {
       currentPage: 1,
+      itemsPerPage: 10,
     }
   },
   computed: {
@@ -44,8 +44,7 @@ export default {
       return Array.isArray(this.appointments) && this.appointments.length > 0
     },
     totalPages() {
-      const len = this.hasItems ? this.appointments.length : 0
-      return Math.max(1, Math.ceil(len / this.itemsPerPage))
+      return Math.ceil((this.appointments?.length || 0) / this.itemsPerPage)
     },
     paginatedAppointments() {
       const start = (this.currentPage - 1) * this.itemsPerPage
@@ -53,20 +52,9 @@ export default {
       return (this.appointments || []).slice(start, end)
     },
   },
-  watch: {
-    appointments() {
-      if (this.currentPage > this.totalPages) this.currentPage = this.totalPages
-      if (!this.hasItems) this.currentPage = 1
-    },
-    itemsPerPage() {
-      this.currentPage = 1
-    },
-  },
   methods: {
     changePage(page) {
-      if (page < 1 || page > this.totalPages) return
       this.currentPage = page
-      this.$emit('page-change', page)
     },
   },
 }

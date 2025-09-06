@@ -50,12 +50,9 @@
           <div class="inline-flex justify-center w-full items-center gap-2 rounded-full bg-white px-2.5 py-1">
             <span class="text-xs font-semibold" :style="{ color: statusText }">
               {{ statusLabel }}
-            </span>
-            <span
-              v-if="statusLabel === 'Upcoming' && countdownDisplay"
-              class="text-xs font-semibold text-black"
-            >
-              · {{ countdownDisplay }}
+              <span v-if="statusLabel === 'Upcoming' && countdownText" class="ml-1 text-gray-600">
+                · {{ countdownText }}
+              </span>
             </span>
           </div>
 
@@ -92,7 +89,7 @@
 </template>
 
 <script>
-import { format, isBefore, differenceInDays } from 'date-fns'
+import { format, isBefore } from "date-fns"
 
 export default {
   name: 'AppointmentCard',
@@ -102,40 +99,28 @@ export default {
   },
   computed: {
     bgClass() { return this.index % 2 === 0 ? 'bg-white' : 'bg-gray-50' },
-    statusText() {
-      if (this.ap.statusColor && this.ap.statusColor.text) return this.ap.statusColor.text
-      if (this.statusLabel === 'Upcoming') return '#059669'
-      if (this.statusLabel === 'Cancelled') return '#DC2626'
-      return '#4B5563'
-    },
     statusLabel() {
+      if (this.ap && this.ap.status) return this.ap.status
       const cancelled = !!this.ap.is_cancelled
       const date = this.ap.appointment_date ? new Date(this.ap.appointment_date) : null
-      if (cancelled) return 'Cancelled'
-      if (date && isBefore(date, new Date())) return 'Completed'
-      return 'Upcoming'
+      if (cancelled) return "Cancelled"
+      if (date && isBefore(date, new Date())) return "Completed"
+      return "Upcoming"
     },
-    // Kalan gün hesaplama: ap.countdown varsa onu kullan; yoksa hesapla
-    countdownDays() {
-      if (typeof this.ap.countdown === 'number') return this.ap.countdown
-      const d = this.ap.appointment_date ? new Date(this.ap.appointment_date) : null
-      if (!d || isNaN(d)) return null
-      const diff = differenceInDays(d, new Date())
-      return Math.max(0, diff)
+    countdownText() {
+      if (typeof this.ap.countdown === "string" && this.ap.countdown) return this.ap.countdown
+      return null
     },
-    countdownDisplay() {
-      const n = this.countdownDays
-      if (n == null) return ''
-      if (n === 0) return 'Today'
-      if (n === 1) return '1 day'
-      return `${n} days`
+    statusText() {
+      if (this.statusLabel === "Upcoming") return "#059669"
+      if (this.statusLabel === "Cancelled") return "#DC2626"
+      return "#4B5563"
     },
     formattedDate() {
       const d = this.ap.appointment_date ? new Date(this.ap.appointment_date) : null
       return d ? format(d, 'dd/MM/yyyy HH:mm') : '-'
     },
     agentsToShow() {
-      if (this.ap.displayAgents && this.ap.displayAgents.length) return this.ap.displayAgents
       const names = this.ap.agent_name || []
       const surnames = this.ap.agent_surname || []
       const colors = this.ap.agent_color || []
