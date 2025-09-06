@@ -51,6 +51,12 @@
             <span class="text-xs font-semibold" :style="{ color: statusText }">
               {{ statusLabel }}
             </span>
+            <span
+              v-if="statusLabel === 'Upcoming' && countdownDisplay"
+              class="text-xs font-semibold text-black"
+            >
+              · {{ countdownDisplay }}
+            </span>
           </div>
 
           <div class="inline-flex w-full items-center gap-2 rounded-full bg-white px-2.5 py-1">
@@ -86,7 +92,7 @@
 </template>
 
 <script>
-import { format, isBefore } from 'date-fns'
+import { format, isBefore, differenceInDays } from 'date-fns'
 
 export default {
   name: 'AppointmentCard',
@@ -108,6 +114,21 @@ export default {
       if (cancelled) return 'Cancelled'
       if (date && isBefore(date, new Date())) return 'Completed'
       return 'Upcoming'
+    },
+    // Kalan gün hesaplama: ap.countdown varsa onu kullan; yoksa hesapla
+    countdownDays() {
+      if (typeof this.ap.countdown === 'number') return this.ap.countdown
+      const d = this.ap.appointment_date ? new Date(this.ap.appointment_date) : null
+      if (!d || isNaN(d)) return null
+      const diff = differenceInDays(d, new Date())
+      return Math.max(0, diff)
+    },
+    countdownDisplay() {
+      const n = this.countdownDays
+      if (n == null) return ''
+      if (n === 0) return 'Today'
+      if (n === 1) return '1 day'
+      return `${n} days`
     },
     formattedDate() {
       const d = this.ap.appointment_date ? new Date(this.ap.appointment_date) : null
