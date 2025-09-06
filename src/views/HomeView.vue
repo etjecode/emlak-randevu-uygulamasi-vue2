@@ -1,12 +1,20 @@
 <template>
   <div class="p-6">
-    <h1 class="text-2xl font-bold">Home Page</h1>
-    <p class="mt-2 text-gray-600">Welcome to the Emlak Randevu Uygulaması!</p>
+    <h1 class="text-2xl font-bold">Appointments</h1>
+    <AppointmentList :appointments="appointments" />
   </div>
 </template>
 
 <script>
+import AppointmentList from '@/components/AppointmentList.vue'
+
 export default {
-  name: "HomeView",
+  name: 'HomeView',
+  components: { AppointmentList },
+  data() {
+    return {
+      appointments: [],
+    }
+  },
 }
 </script>
