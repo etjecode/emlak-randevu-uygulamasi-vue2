@@ -27,6 +27,7 @@
   },
   "homepage": "https://github.com/etjecode/emlak-randevu-uygulamasi-vue2#readme",
   "dependencies": {
-    "vue": "^2.7.16"
+    "vue": "^2.7.16",
+    "vue-router": "^3.6.5"
   }
 }
