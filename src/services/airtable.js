@@ -7,6 +7,7 @@ const API_URL = `https://api.airtable.com/v0/${BASE_ID}`
 const AGENTS_TABLE = 'tblejF2oJbI8ze105'
 const APPOINTMENTS_TABLE = 'tbl9reEf5STrkSA85'
 const FID_AGENT_COLOR = 'fldyA8BCFirmIlkXI'
+const CONTACTS_TABLE = 'Contacts'
 
 const headers = {
   Authorization: `Bearer ${API_KEY}`,
@@ -80,4 +81,36 @@ export async function fetchAllForHome() {
   const [agents, rawAppointments] = await Promise.all([fetchAgents(), fetchAppointments()])
   const appointments = enrichAppointmentsWithAgentColors(rawAppointments, agents)
   return { agents, appointments }
+}
+
+export async function fetchContacts() {
+  try {
+    const res = await api.get(`/${CONTACTS_TABLE}`, {
+      params: {
+        pageSize: 100,
+        fields: ['contact_name', 'contact_surname', 'contact_email', 'contact_phone'],
+      },
+    })
+
+    const list = res.data?.records || []
+
+    const norm = (v) => {
+      const raw = Array.isArray(v) ? (v[0] ?? '') : (v ?? '')
+      return String(raw ?? '')
+    }
+
+    return list.map((record) => {
+      const f = record.fields || {}
+      return {
+        id: record.id,
+        name: norm(f.contact_name),
+        surname: norm(f.contact_surname),
+        email: norm(f.contact_email),
+        phone: norm(f.contact_phone),
+      }
+    })
+  } catch (err) {
+    console.error('[fetchContacts] error:', err?.response?.data || err)
+    return []
+  }
 }
