@@ -1,0 +1,32 @@
+{
+  "name": "emlak-randevu-uygulamasi-vue2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "vite": "^4.5.14",
+    "vite-plugin-vue2": "^2.0.3",
+    "vue-template-compiler": "^2.7.16"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/etjecode/emlak-randevu-uygulamasi-vue2.git"
+  },
+  "bugs": {
+    "url": "https://github.com/etjecode/emlak-randevu-uygulamasi-vue2/issues"
+  },
+  "homepage": "https://github.com/etjecode/emlak-randevu-uygulamasi-vue2#readme",
+  "dependencies": {
+    "vue": "^2.7.16"
+  }
+}
