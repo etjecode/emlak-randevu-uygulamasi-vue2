@@ -19,8 +19,14 @@
     <AppointmentList
       :appointments="filteredAndSortedAppointments"
       :items-per-page="10"
-      @edit="openEdit"
     />
+
+    <CreateAppointmentModal
+      :show="isCreateOpen"
+      @close="closeCreate"
+      @saved="/* TODO: API bağlanınca listeyi yenile */"
+    />
+
   </div>
 </template>
 
@@ -29,10 +35,11 @@ import FilterBar from '@/components/FilterBar.vue'
 import AppointmentList from '@/components/AppointmentList.vue'
 import { fetchAllForHome } from '@/services/airtable'
 import { differenceInDays, isBefore } from 'date-fns'
+import CreateAppointmentModal from '@/components/CreateAppointmentModal.vue'
 
 export default {
   name: 'HomeView',
-  components: { FilterBar, AppointmentList },
+  components: { FilterBar, AppointmentList, CreateAppointmentModal },
   data() {
     return {
       allAppointments: [],
@@ -131,7 +138,7 @@ export default {
       return isNaN(d) ? null : d
     },
     openCreate() { this.isCreateOpen = true },
-    openEdit(ap) { this.selectedAppointment = ap; this.isEditOpen = true },
-  },
-}
+    closeCreate() { this.isCreateOpen = false },
+  }
+  }
 </script>
