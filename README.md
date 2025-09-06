@@ -1,50 +1,50 @@
-# Emlak Randevu Uygulaması
+# Real Estate Appointment Application
 
-Basit bir başlangıç iskeleti. **Vue 2 (v2.7)** ve **Vite** ile geliştirme için hazırlanmıştır.
+A simple starter skeleton built with **Vue 2 (v2.7)** and **Vite**.
 
-## 🚀 Özellikler
+## 🚀 Features
 
 - Vue 2.7 (Options API)
-- Vite ile hızlı geliştirme ve derleme
-- Tek sayfa uygulama başlangıç yapısı (App.vue + main.js)
+- Fast development and build with Vite
+- Basic single-page application structure (App.vue + main.js)
 
-## 📦 Kurulum
+## 📦 Installation
 
-### Gereksinimler
-- Node.js **>= 18.x** (LTS önerilir)
-- npm (veya yarn/pnpm)
+### Requirements
+- Node.js **>= 18.x** (LTS recommended)
+- npm (or yarn/pnpm)
 
-### Adımlar
+### Steps
 ```bash
-# bağımlılıkları yükle
+# install dependencies
 npm install
 
-# geliştirme sunucusunu başlat
+# start development server
 npm run dev
 
-# production için derle
+# build for production
 npm run build
 
-# build önizlemesi
+# preview the build
 npm run preview
 ```
 
-## 📁 Proje Yapısı (minimal)
+## 📁 Project Structure (minimal)
 
 ```
 ├── src/
-│   ├── App.vue        # kök bileşen
-│   └── main.js        # giriş noktası
-├── index.html         # uygulama şablonu
-├── vite.config.mjs    # Vite yapılandırması (Vue2 plugin)
+│   ├── App.vue        # root component
+│   └── main.js        # entry point
+├── index.html         # app template
+├── vite.config.mjs    # Vite config (Vue2 plugin)
 └── package.json
 ```
 
-## 🔧 Kullanılan Teknolojiler (şu anki sade kurulum)
+## 🔧 Tech Stack
 
 - [Vue 2.7](https://v2.vuejs.org/)  
 - [Vite](https://vitejs.dev/)  
 - [vite-plugin-vue2](https://github.com/underfin/vite-plugin-vue2)
 
-## 📜 Lisans
+## 📜 License
 [ISC](LICENSE)
