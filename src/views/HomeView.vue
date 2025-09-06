@@ -3,13 +3,14 @@
     <FilterBar :agents="agents" @change="onFiltersChange" />
 
     <div v-if="filteredAndSortedAppointments.length > 0"
-         class="mb-4 flex items-center justify-between border-b-2 border-gray-200 border-t-4 p-4">
-      {{ filteredAndSortedAppointments.length }}
-      {{ filteredAndSortedAppointments.length === 1 ? 'Appointment' : 'Appointments' }} found.
+      class="mb-4 flex items-center justify-between border-b-2 border-gray-200 border-t-4 p-4">
+      <div>
+        {{ filteredAndSortedAppointments.length }}
+        {{ filteredAndSortedAppointments.length === 1 ? 'Appointment' : 'Appointments' }} found.
+      </div>
       <button
         @click="openCreate"
         class="flex items-center gap-2 rounded-lg bg-pink-500 px-4 py-2 font-semibold text-white hover:bg-pink-600"
-        type="button"
       >
         <i class="fa-solid fa-circle-plus"></i>
         Create Appointment
@@ -18,15 +19,22 @@
 
     <AppointmentList
       :appointments="filteredAndSortedAppointments"
-      :items-per-page="10"
+      @edit="openEdit"
     />
 
     <CreateAppointmentModal
-      :show="isCreateOpen"
+      :show="showCreateModal"
       @close="closeCreate"
-      @saved="/* TODO: API bağlanınca listeyi yenile */"
+      @submit="onCreated"
     />
 
+    <EditAppointmentModal
+      :show="showEditModal"
+      :appointment="selectedAppointment"
+      :all-appointments="appointments"
+      @close="closeEdit"
+      @saved="onSaved"
+    />
   </div>
 </template>
 
@@ -34,15 +42,15 @@
 import FilterBar from '@/components/FilterBar.vue'
 import AppointmentList from '@/components/AppointmentList.vue'
 import { fetchAllForHome } from '@/services/airtable'
-import { differenceInDays, isBefore } from 'date-fns'
+import EditAppointmentModal from "@/components/EditAppointmentModal.vue"
 import CreateAppointmentModal from '@/components/CreateAppointmentModal.vue'
 
 export default {
   name: 'HomeView',
-  components: { FilterBar, AppointmentList, CreateAppointmentModal },
+  components: { FilterBar, AppointmentList, EditAppointmentModal, CreateAppointmentModal },
   data() {
     return {
-      allAppointments: [],
+      appointments: [],
       agents: [],
       filters: {
         status: 'All Statuses',
@@ -51,46 +59,79 @@ export default {
         search: '',
         agents: [],
       },
-      isCreateOpen: false,
-      isEditOpen: false,
+      showEditModal: false,
       selectedAppointment: null,
-      loading: true,
+      showCreateModal: false,
     }
   },
   async mounted() {
-    const haveEnv =
-      !!import.meta.env.VITE_AIRTABLE_API_KEY &&
-      !!import.meta.env.VITE_AIRTABLE_BASE_ID
-
-    if (!haveEnv) {
-      console.warn('[HomeView] Missing Airtable env; skipping fetch.')
-      this.loading = false
-      return
+    try {
+      const { appointments, agents } = await fetchAllForHome()
+      this.appointments = appointments
+      this.agents = agents
+    } catch (e) {
+      console.error("[HomeView] fetchAllForHome failed:", e)
     }
-
-    const { agents, appointments } = await fetchAllForHome()
-    this.allAppointments = appointments
-    this.agents = agents
-    this.loading = false
+  },
+  methods: {
+    onFiltersChange(f) {
+      this.filters = { ...this.filters, ...f }
+    },
+    // Create
+    openCreate() { this.showCreateModal = true },
+    closeCreate() { this.showCreateModal = false },
+    onCreated(created) {
+      if (created && created.id) {
+        this.appointments = [{ ...created }, ...this.appointments]
+      }
+      this.closeCreate()
+    },
+    // Edit
+    openEdit(ap) {
+      this.selectedAppointment = ap
+      this.showEditModal = true
+    },
+    closeEdit() {
+      this.showEditModal = false
+      this.selectedAppointment = null
+    },
+    onSaved(updated) {
+      const i = this.appointments.findIndex(a => a.id === updated.id)
+      if (i !== -1) this.$set(this.appointments, i, { ...this.appointments[i], ...updated })
+    },
+    _safeLower(v) { return (v ?? "").toString().toLowerCase() },
+    _parseLocalDateTime(s) {
+      if (!s) return null
+      const d = new Date(s)
+      return isNaN(d) ? null : d
+    }
   },
   computed: {
     filteredAndSortedAppointments() {
       const now = new Date()
       const f = this.filters
+      const from = this._parseLocalDateTime(f.from)
+      const to = this._parseLocalDateTime(f.to)
+      const MS_PER_DAY = 86400000
 
-      const from = this.parseLocalDateTime(f.from)
-      const to = this.parseLocalDateTime(f.to)
-
-      let list = (this.allAppointments || []).map((ap) => {
+      // status + countdown (label) enrichment
+      let list = (this.appointments || []).map(ap => {
         const date = ap.appointment_date ? new Date(ap.appointment_date) : null
         const cancelled = !!ap.is_cancelled
 
-        let status = 'Upcoming'
-        if (cancelled) status = 'Cancelled'
-        else if (date && isBefore(date, now)) status = 'Completed'
+        let status = "Upcoming"
+        if (cancelled) status = "Cancelled"
+        else if (date && date.getTime() < now.getTime()) status = "Completed"
 
-        const countdown = !cancelled && date ? Math.max(0, differenceInDays(date, now)) : null
-        return { ...ap, status, countdown }
+        let countdownLabel = null
+        if (!cancelled && date && status === "Upcoming") {
+          const diffDays = Math.ceil((date.getTime() - now.getTime()) / MS_PER_DAY)
+          if (diffDays <= 0) countdownLabel = "Today"
+          else if (diffDays === 1) countdownLabel = "1 day"
+          else countdownLabel = `${diffDays} days`
+        }
+
+        return { ...ap, status, countdown: countdownLabel }
       })
 
       if (f.status === 'Cancelled') list = list.filter((ap) => ap.status === 'Cancelled')
@@ -105,13 +146,13 @@ export default {
       if (from) list = list.filter((ap) => ap.appointment_date && new Date(ap.appointment_date).getTime() >= from.getTime())
       if (to) list = list.filter((ap) => ap.appointment_date && new Date(ap.appointment_date).getTime() <= to.getTime())
 
-      const q = this.safeLower(f.search).trim()
+      const q = this._safeLower(f.search).trim()
       if (q) {
         list = list.filter((ap) => {
-          const name = this.safeLower(`${ap.contact_name} ${ap.contact_surname}`)
-          const email = this.safeLower(ap.contact_email)
-          const phone = this.safeLower(ap.contact_phone)
-          const addr = this.safeLower(ap.appointment_address)
+          const name = this._safeLower(`${ap.contact_name} ${ap.contact_surname}`)
+          const email = this._safeLower(ap.contact_email)
+          const phone = this._safeLower(ap.contact_phone)
+          const addr = this._safeLower(ap.appointment_address)
           return name.includes(q) || email.includes(q) || phone.includes(q) || addr.includes(q)
         })
       }
@@ -123,22 +164,7 @@ export default {
       })
 
       return list
-    },
-  },
-  methods: {
-    onFiltersChange(f) {
-      this.filters = { ...this.filters, ...f }
-    },
-    safeLower(v) {
-      return (v == null ? '' : String(v)).toLowerCase()
-    },
-    parseLocalDateTime(s) {
-      if (!s) return null
-      const d = new Date(s)
-      return isNaN(d) ? null : d
-    },
-    openCreate() { this.isCreateOpen = true },
-    closeCreate() { this.isCreateOpen = false },
+    }
   }
-  }
+}
 </script>
